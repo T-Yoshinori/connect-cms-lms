@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Models\User\Lms;
+namespace App\Models\User\YuyuLearning;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
-class LmsFrame extends Model
+class YuyuLearningFrame extends Model
 {
-    protected $table = 'lms_frames';
+    protected $table = 'yuyu_learning_frames';
     protected $guarded = ['id'];
 
     protected $casts = [
@@ -17,8 +17,8 @@ class LmsFrame extends Model
 
     protected static function booted()
     {
-        static::created(function (LmsFrame $lms_frame) {
-            $frame = DB::table('frames')->where('id', $lms_frame->frame_id)->first();
+        static::created(function (YuyuLearningFrame $yuyu_learning_frame) {
+            $frame = DB::table('frames')->where('id', $yuyu_learning_frame->frame_id)->first();
 
             if (empty($frame) || !empty($frame->bucket_id)) {
                 return;
@@ -26,20 +26,19 @@ class LmsFrame extends Model
 
             $bucket_id = DB::table('buckets')->insertGetId([
                 'bucket_name' => 'LMS',
-                'plugin_name' => 'lms',
+                'plugin_name' => 'yuyulearning',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
             DB::table('frames')
-                ->where('id', $lms_frame->frame_id)
+                ->where('id', $yuyu_learning_frame->frame_id)
                 ->update(['bucket_id' => $bucket_id]);
         });
     }
 
     public function course()
     {
-        return $this->belongsTo(LmsCourse::class, 'course_id', 'id');
+        return $this->belongsTo(YuyuLearningCourse::class, 'course_id', 'id');
     }
 }
-

@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Plugins\User\Lms\Services;
+namespace App\Plugins\User\Yuyulearning\Services;
 
 use Illuminate\Support\Facades\DB;
 
-use App\Models\User\Lms\LmsContent;
-use App\Models\User\Lms\LmsContentProgress;
-use App\Models\User\Lms\LmsEnrollment;
+use App\Models\User\YuyuLearning\YuyuLearningContent;
+use App\Models\User\YuyuLearning\YuyuLearningContentProgress;
+use App\Models\User\YuyuLearning\YuyuLearningEnrollment;
 
-class LmsProgressService
+class YuyuLearningProgressService
 {
     private const SELF_COMPLETION_TYPES = [
         'general',
@@ -21,19 +21,19 @@ class LmsProgressService
      *
      * ページ／フレームの閲覧可否はConnect-CMS標準の権限機構へ委ね、
      * LMS側ではコースごとの受講グループを重ねて判定しない。
-     * lms_enrollments は個人別受講実績として内部生成する。
+     * yuyu_learning_enrollments は個人別受講実績として内部生成する。
      */
-    public function resolveEnrollmentForCourse(int $course_id, int $user_id): LmsEnrollment
+    public function resolveEnrollmentForCourse(int $course_id, int $user_id): YuyuLearningEnrollment
     {
         return DB::transaction(function () use ($course_id, $user_id) {
-            $enrollment = LmsEnrollment::query()
+            $enrollment = YuyuLearningEnrollment::query()
                 ->where('course_id', $course_id)
                 ->where('user_id', $user_id)
                 ->lockForUpdate()
                 ->first();
 
             if (!$enrollment) {
-                $enrollment = new LmsEnrollment();
+                $enrollment = new YuyuLearningEnrollment();
                 $enrollment->course_id = $course_id;
                 $enrollment->user_id = $user_id;
                 $enrollment->enrollment_source = 'page';
@@ -47,7 +47,7 @@ class LmsProgressService
         });
     }
 
-    public function getEnrollmentForContent(LmsContent $content, int $user_id): ?LmsEnrollment
+    public function getEnrollmentForContent(YuyuLearningContent $content, int $user_id): ?YuyuLearningEnrollment
     {
         $content->loadMissing('section');
 
@@ -58,20 +58,20 @@ class LmsProgressService
         return $this->resolveEnrollmentForCourse((int) $content->section->course_id, $user_id);
     }
 
-    public function getProgressForUser(LmsContent $content, int $user_id): ?LmsContentProgress
+    public function getProgressForUser(YuyuLearningContent $content, int $user_id): ?YuyuLearningContentProgress
     {
         $enrollment = $this->getEnrollmentForContent($content, $user_id);
         if (!$enrollment) {
             return null;
         }
 
-        return LmsContentProgress::query()
+        return YuyuLearningContentProgress::query()
             ->where('enrollment_id', $enrollment->id)
             ->where('content_id', $content->id)
             ->first();
     }
 
-    public function markStartedForUser(LmsContent $content, int $user_id): ?LmsContentProgress
+    public function markStartedForUser(YuyuLearningContent $content, int $user_id): ?YuyuLearningContentProgress
     {
         $enrollment = $this->getEnrollmentForContent($content, $user_id);
         if (!$enrollment) {
@@ -81,7 +81,7 @@ class LmsProgressService
         return $this->markStarted($enrollment, $content);
     }
 
-    public function markSelfCompletedForUser(LmsContent $content, int $user_id): ?LmsContentProgress
+    public function markSelfCompletedForUser(YuyuLearningContent $content, int $user_id): ?YuyuLearningContentProgress
     {
         if (!in_array($content->content_type, self::SELF_COMPLETION_TYPES, true)) {
             return null;
@@ -95,17 +95,17 @@ class LmsProgressService
         return $this->markCompleted($enrollment, $content, 'self');
     }
 
-    public function markStarted(LmsEnrollment $enrollment, LmsContent $content): LmsContentProgress
+    public function markStarted(YuyuLearningEnrollment $enrollment, YuyuLearningContent $content): YuyuLearningContentProgress
     {
         return DB::transaction(function () use ($enrollment, $content) {
-            $progress = LmsContentProgress::query()
+            $progress = YuyuLearningContentProgress::query()
                 ->where('enrollment_id', $enrollment->id)
                 ->where('content_id', $content->id)
                 ->lockForUpdate()
                 ->first();
 
             if (!$progress) {
-                $progress = new LmsContentProgress();
+                $progress = new YuyuLearningContentProgress();
                 $progress->enrollment_id = $enrollment->id;
                 $progress->content_id = $content->id;
                 $progress->status = 'in_progress';
@@ -130,19 +130,19 @@ class LmsProgressService
     }
 
     public function markCompleted(
-        LmsEnrollment $enrollment,
-        LmsContent $content,
+        YuyuLearningEnrollment $enrollment,
+        YuyuLearningContent $content,
         string $completion_source
-    ): LmsContentProgress {
+    ): YuyuLearningContentProgress {
         $progress = DB::transaction(function () use ($enrollment, $content, $completion_source) {
-            $progress = LmsContentProgress::query()
+            $progress = YuyuLearningContentProgress::query()
                 ->where('enrollment_id', $enrollment->id)
                 ->where('content_id', $content->id)
                 ->lockForUpdate()
                 ->first();
 
             if (!$progress) {
-                $progress = new LmsContentProgress();
+                $progress = new YuyuLearningContentProgress();
                 $progress->enrollment_id = $enrollment->id;
                 $progress->content_id = $content->id;
             }
@@ -168,19 +168,19 @@ class LmsProgressService
     }
 
     public function markFailed(
-        LmsEnrollment $enrollment,
-        LmsContent $content,
+        YuyuLearningEnrollment $enrollment,
+        YuyuLearningContent $content,
         string $completion_source
-    ): LmsContentProgress {
+    ): YuyuLearningContentProgress {
         return DB::transaction(function () use ($enrollment, $content, $completion_source) {
-            $progress = LmsContentProgress::query()
+            $progress = YuyuLearningContentProgress::query()
                 ->where('enrollment_id', $enrollment->id)
                 ->where('content_id', $content->id)
                 ->lockForUpdate()
                 ->first();
 
             if (!$progress) {
-                $progress = new LmsContentProgress();
+                $progress = new YuyuLearningContentProgress();
                 $progress->enrollment_id = $enrollment->id;
                 $progress->content_id = $content->id;
             }
@@ -204,19 +204,19 @@ class LmsProgressService
         });
     }
 
-    public function syncCourseCompletion(LmsEnrollment $enrollment): bool
+    public function syncCourseCompletion(YuyuLearningEnrollment $enrollment): bool
     {
-        $required_content_ids = DB::table('lms_contents')
-            ->join('lms_sections', 'lms_sections.id', '=', 'lms_contents.section_id')
-            ->where('lms_sections.course_id', $enrollment->course_id)
-            ->where('lms_contents.is_required', true)
-            ->pluck('lms_contents.id');
+        $required_content_ids = DB::table('yuyu_learning_contents')
+            ->join('yuyu_learning_sections', 'yuyu_learning_sections.id', '=', 'yuyu_learning_contents.section_id')
+            ->where('yuyu_learning_sections.course_id', $enrollment->course_id)
+            ->where('yuyu_learning_contents.is_required', true)
+            ->pluck('yuyu_learning_contents.id');
 
         if ($required_content_ids->isEmpty()) {
             return false;
         }
 
-        $completed_count = LmsContentProgress::query()
+        $completed_count = YuyuLearningContentProgress::query()
             ->where('enrollment_id', $enrollment->id)
             ->whereIn('content_id', $required_content_ids)
             ->where('status', 'completed')

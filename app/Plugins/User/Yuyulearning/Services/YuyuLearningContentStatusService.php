@@ -1,27 +1,27 @@
 <?php
 
-namespace App\Plugins\User\Lms\Services;
+namespace App\Plugins\User\Yuyulearning\Services;
 
 use Illuminate\Support\Collection;
 
-use App\Models\User\Lms\LmsContent;
-use App\Models\User\Lms\LmsEnrollment;
-use App\Plugins\User\Lms\Services\Adapters\ContentStatusAdapterInterface;
-use App\Plugins\User\Lms\Services\Adapters\LearningtaskContentAdapter;
-use App\Plugins\User\Lms\Services\Adapters\QuestionnaireContentAdapter;
-use App\Plugins\User\Lms\Services\Adapters\QuizContentAdapter;
+use App\Models\User\YuyuLearning\YuyuLearningContent;
+use App\Models\User\YuyuLearning\YuyuLearningEnrollment;
+use App\Plugins\User\Yuyulearning\Services\Adapters\ContentStatusAdapterInterface;
+use App\Plugins\User\Yuyulearning\Services\Adapters\LearningtaskContentAdapter;
+use App\Plugins\User\Yuyulearning\Services\Adapters\QuestionnaireContentAdapter;
+use App\Plugins\User\Yuyulearning\Services\Adapters\QuizContentAdapter;
 
-class LmsContentStatusService
+class YuyuLearningContentStatusService
 {
     private $progressService;
 
-    public function __construct(?LmsProgressService $progressService = null)
+    public function __construct(?YuyuLearningProgressService $progressService = null)
     {
-        $this->progressService = $progressService ?: new LmsProgressService();
+        $this->progressService = $progressService ?: new YuyuLearningProgressService();
     }
 
     public function syncAutomaticCompletions(
-        LmsEnrollment $enrollment,
+        YuyuLearningEnrollment $enrollment,
         Collection $contents,
         int $user_id
     ): void {
@@ -40,8 +40,8 @@ class LmsContentStatusService
     }
 
     public function syncAutomaticCompletion(
-        LmsEnrollment $enrollment,
-        LmsContent $content,
+        YuyuLearningEnrollment $enrollment,
+        YuyuLearningContent $content,
         int $user_id
     ): bool {
         $adapter = $this->getAdapter($content);
@@ -56,8 +56,8 @@ class LmsContentStatusService
     }
 
     private function applyResolvedStatus(
-        LmsEnrollment $enrollment,
-        LmsContent $content,
+        YuyuLearningEnrollment $enrollment,
+        YuyuLearningContent $content,
         ?string $status
     ): void {
         if ($status === 'completed') {
@@ -83,7 +83,7 @@ class LmsContentStatusService
         }
     }
 
-    private function getAdapter(LmsContent $content): ?ContentStatusAdapterInterface
+    private function getAdapter(YuyuLearningContent $content): ?ContentStatusAdapterInterface
     {
         switch ($content->content_type) {
             case 'quiz':
@@ -97,7 +97,7 @@ class LmsContentStatusService
         }
     }
 
-    private function getCompletionSource(LmsContent $content): string
+    private function getCompletionSource(YuyuLearningContent $content): string
     {
         return [
             'quiz' => 'quiz',

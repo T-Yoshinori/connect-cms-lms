@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- 内部プラグイン名を `Lms` / `lms` から `Yuyulearning` / `yuyulearning` へ変更
+- DBテーブル接頭辞を `lms_` から `yuyu_learning_` へ変更
+- 既存のデモサイトデータを維持する名称変更Migrationを追加
+
 ## 0.9.0-beta.1 - 2026-08-31
 
 - 初回ベータ版

@@ -1,6 +1,6 @@
-# Connect-CMS LMS
+# YuyuLearning for Connect-CMS
 
-Connect-CMS向けの非公式LMS（学習管理）プラグインです。コース、章、教材、受講進捗、コース修了を管理し、Connect-CMSの既存プラグインを教材として組み合わせられます。LMS連携対応版のQuizzesプラグインを同梱しています。
+YuyuLearningは、Connect-CMS向けの非公式LMS（学習管理）プラグインです。コース、章、教材、受講進捗、コース修了を管理し、Connect-CMSの既存プラグインを教材として組み合わせられます。LMS連携対応版のQuizzesプラグインを同梱しています。
 
 > バージョン: 0.9.0-beta.1  
 > 開発・提供: ゆうゆう企画  
@@ -39,7 +39,7 @@ QuizzesはConnect-CMS標準には含まれないため、本配布ZIPへLMS連�
 
 ## ダウンロード
 
-- [connect-cms-lms-0.9.0-beta.1.zip](downloads/connect-cms-lms-0.9.0-beta.1.zip)
+- 次回リリースで `connect-cms-yuyu-learning-<version>.zip` を公開予定
 
 ZIP内のディレクトリ構成は、Connect-CMSのルートへ重ねて配置できる形になっています。
 
@@ -50,17 +50,17 @@ ZIP内のディレクトリ構成は、Connect-CMSのルートへ重ねて配置
 3. ZIP内の`app`、`database`、`resources`をConnect-CMSのルートへ重ねて配置します。LMSとQuizzesの両方が配置されます。
 4. Connect-CMSのルートで`php artisan migrate`を実行します。
 5. `php artisan view:clear`を実行します。
-6. 管理画面のプラグイン追加から「LMS」をページへ配置します。
-7. LMSフレーム設定でコースを作成し、章と教材を登録します。
+6. 管理画面のプラグイン追加から「YuyuLearning」をページへ配置します。
+7. YuyuLearningフレーム設定でコースを作成し、章と教材を登録します。
 
 ## 基本的な使い方
 
-1. LMSを配置するページの閲覧権限を設定します。
-2. LMSフレームの「新規作成」からコースを作成します。
+1. YuyuLearningを配置するページの閲覧権限を設定します。
+2. YuyuLearningフレームの「新規作成」からコースを作成します。
 3. コースに章を追加します。
 4. 各章へ教材を登録します。
 5. コースを公開します。
-6. 受講者がLMSページを開くと、受講実績が自動作成されます。
+6. 受講者がYuyuLearningページを開くと、受講実績が自動作成されます。
 7. 管理者は「受講進捗」から対象者の状態を確認します。
 
 固定記事、ブログ、外部教材は受講者本人が完了操作を行います。小テスト、アンケート、レポート課題は、それぞれの教材プラグインに保存された結果からLMSが完了状態を判定します。

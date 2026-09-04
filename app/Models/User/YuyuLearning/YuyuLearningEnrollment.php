@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Models\User\Lms;
+namespace App\Models\User\YuyuLearning;
 
 use Illuminate\Database\Eloquent\Model;
 use App\User;
 
-class LmsEnrollment extends Model
+class YuyuLearningEnrollment extends Model
 {
-    protected $table = 'lms_enrollments';
+    protected $table = 'yuyu_learning_enrollments';
     protected $guarded = ['id'];
 
     protected $casts = [
@@ -18,7 +18,7 @@ class LmsEnrollment extends Model
 
     public function course()
     {
-        return $this->belongsTo(LmsCourse::class, 'course_id', 'id');
+        return $this->belongsTo(YuyuLearningCourse::class, 'course_id', 'id');
     }
 
     public function user()
@@ -28,7 +28,7 @@ class LmsEnrollment extends Model
 
     public function progresses()
     {
-        return $this->hasMany(LmsContentProgress::class, 'enrollment_id', 'id');
+        return $this->hasMany(YuyuLearningContentProgress::class, 'enrollment_id', 'id');
     }
 }
 

@@ -19,7 +19,7 @@
     <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
         <span>{{ $is_create ? 'コース新規作成' : 'コース編集' }}</span>
         @if (!$is_create)
-            <a href="{{ url('/') }}/plugin/lms/adminProgress/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
+            <a href="{{ url('/') }}/plugin/yuyulearning/adminProgress/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
                class="btn btn-outline-success btn-sm mt-2 mt-sm-0">
                 <i class="fas fa-chart-bar"></i> 受講進捗
             </a>
@@ -27,7 +27,7 @@
     </div>
 
     <div class="card-body">
-        <form action="{{ url('/redirect/plugin/lms/saveCourse/' . $page->id . '/' . $frame->id . ($is_create ? '' : '/' . $course->id)) }}"
+        <form action="{{ url('/redirect/plugin/yuyulearning/saveCourse/' . $page->id . '/' . $frame->id . ($is_create ? '' : '/' . $course->id)) }}"
               method="POST">
             @csrf
 
@@ -36,9 +36,9 @@
                    value="{{ URL::to($page->permanent_link) }}#frame-{{ $frame->id }}">
 
             <div class="form-group">
-                <label for="lms_course_name">コース名 <span class="badge badge-danger">必須</span></label>
+                <label for="yuyu_learning_course_name">コース名 <span class="badge badge-danger">必須</span></label>
                 <input type="text"
-                       id="lms_course_name"
+                       id="yuyu_learning_course_name"
                        name="name"
                        value="{{ old('name', $course->name) }}"
                        class="form-control @error('name') is-invalid @enderror"
@@ -50,8 +50,8 @@
             </div>
 
             <div class="form-group">
-                <label for="lms_course_description">コース説明</label>
-                <textarea id="lms_course_description"
+                <label for="yuyu_learning_course_description">コース説明</label>
+                <textarea id="yuyu_learning_course_description"
                           name="description"
                           class="form-control @error('description') is-invalid @enderror"
                           rows="5">{{ old('description', $course->description) }}</textarea>
@@ -61,8 +61,8 @@
             </div>
 
             <div class="form-group">
-                <label for="lms_course_status">公開状態</label>
-                <select id="lms_course_status"
+                <label for="yuyu_learning_course_status">公開状態</label>
+                <select id="yuyu_learning_course_status"
                         name="status"
                         class="form-control @error('status') is-invalid @enderror">
                     <option value="draft" @if (old('status', $course->status) === 'draft') selected @endif>下書き</option>
@@ -75,9 +75,9 @@
             </div>
 
             <div class="form-group">
-                <label for="lms_course_sort_order">表示順</label>
+                <label for="yuyu_learning_course_sort_order">表示順</label>
                 <input type="number"
-                       id="lms_course_sort_order"
+                       id="yuyu_learning_course_sort_order"
                        name="sort_order"
                        value="{{ old('sort_order', $course->sort_order ?? 0) }}"
                        min="0"
@@ -111,7 +111,7 @@
             <span class="font-weight-bold">章・教材構成</span>
             <span class="small text-muted ml-2">コース内の学習順を設定します。</span>
         </div>
-        <a href="{{ url('/') }}/plugin/lms/createSection/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
+        <a href="{{ url('/') }}/plugin/yuyulearning/createSection/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
            class="btn btn-primary btn-sm mt-2 mt-sm-0">
             <i class="fas fa-plus"></i> 章を追加
         </a>
@@ -134,7 +134,7 @@
                         </div>
 
                         <div class="d-flex flex-wrap align-items-center mt-2 mt-sm-0">
-                            <form action="{{ url('/redirect/plugin/lms/moveSection/' . $page->id . '/' . $frame->id . '/' . $section->id) }}"
+                            <form action="{{ url('/redirect/plugin/yuyulearning/moveSection/' . $page->id . '/' . $frame->id . '/' . $section->id) }}"
                                   method="POST"
                                   class="mr-1">
                                 @csrf
@@ -147,7 +147,7 @@
                                 </button>
                             </form>
 
-                            <form action="{{ url('/redirect/plugin/lms/moveSection/' . $page->id . '/' . $frame->id . '/' . $section->id) }}"
+                            <form action="{{ url('/redirect/plugin/yuyulearning/moveSection/' . $page->id . '/' . $frame->id . '/' . $section->id) }}"
                                   method="POST"
                                   class="mr-2">
                                 @csrf
@@ -160,12 +160,12 @@
                                 </button>
                             </form>
 
-                            <a href="{{ url('/') }}/plugin/lms/editSection/{{ $page->id }}/{{ $frame->id }}/{{ $section->id }}#frame-{{ $frame->id }}"
+                            <a href="{{ url('/') }}/plugin/yuyulearning/editSection/{{ $page->id }}/{{ $frame->id }}/{{ $section->id }}#frame-{{ $frame->id }}"
                                class="btn btn-outline-primary btn-sm mr-2">
                                 章を編集
                             </a>
 
-                            <a href="{{ url('/') }}/plugin/lms/createContent/{{ $page->id }}/{{ $frame->id }}/{{ $section->id }}#frame-{{ $frame->id }}"
+                            <a href="{{ url('/') }}/plugin/yuyulearning/createContent/{{ $page->id }}/{{ $frame->id }}/{{ $section->id }}#frame-{{ $frame->id }}"
                                class="btn btn-primary btn-sm">
                                 <i class="fas fa-plus"></i> 教材を追加
                             </a>
@@ -211,11 +211,11 @@
                                                 </td>
                                                 <td class="text-center align-middle">
                                                     <div class="d-flex justify-content-center flex-wrap">
-                                                        <a href="{{ url('/') }}/plugin/lms/editContent/{{ $page->id }}/{{ $frame->id }}/{{ $content->id }}#frame-{{ $frame->id }}"
+                                                        <a href="{{ url('/') }}/plugin/yuyulearning/editContent/{{ $page->id }}/{{ $frame->id }}/{{ $content->id }}#frame-{{ $frame->id }}"
                                                            class="btn btn-outline-primary btn-sm mr-1 mb-1">
                                                             編集
                                                         </a>
-                                                        <form action="{{ url('/redirect/plugin/lms/deleteContent/' . $page->id . '/' . $frame->id . '/' . $content->id) }}"
+                                                        <form action="{{ url('/redirect/plugin/yuyulearning/deleteContent/' . $page->id . '/' . $frame->id . '/' . $content->id) }}"
                                                               method="POST"
                                                               class="mb-1"
                                                               onsubmit="return confirm('教材「{{ addslashes($content->title) }}」を削除します。よろしいですか？');">

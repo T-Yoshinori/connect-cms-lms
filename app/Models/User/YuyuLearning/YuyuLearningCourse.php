@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Models\User\Lms;
+namespace App\Models\User\YuyuLearning;
 
 use Illuminate\Database\Eloquent\Model;
 use App\UserableNohistory;
 
-class LmsCourse extends Model
+class YuyuLearningCourse extends Model
 {
     use UserableNohistory;
 
-    protected $table = 'lms_courses';
+    protected $table = 'yuyu_learning_courses';
     protected $guarded = ['id'];
 
     protected $casts = [
@@ -19,24 +19,24 @@ class LmsCourse extends Model
 
     public function sections()
     {
-        return $this->hasMany(LmsSection::class, 'course_id', 'id')
+        return $this->hasMany(YuyuLearningSection::class, 'course_id', 'id')
             ->orderBy('sort_order')
             ->orderBy('id');
     }
 
     public function enrollments()
     {
-        return $this->hasMany(LmsEnrollment::class, 'course_id', 'id');
+        return $this->hasMany(YuyuLearningEnrollment::class, 'course_id', 'id');
     }
 
     public function course_groups()
     {
-        return $this->hasMany(LmsCourseGroup::class, 'course_id', 'id');
+        return $this->hasMany(YuyuLearningCourseGroup::class, 'course_id', 'id');
     }
 
     public function frames()
     {
-        return $this->hasMany(LmsFrame::class, 'course_id', 'id');
+        return $this->hasMany(YuyuLearningFrame::class, 'course_id', 'id');
     }
 }
 

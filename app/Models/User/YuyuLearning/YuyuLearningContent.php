@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Models\User\Lms;
+namespace App\Models\User\YuyuLearning;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 use App\Models\Common\Page;
 
-class LmsContent extends Model
+class YuyuLearningContent extends Model
 {
-    protected $table = 'lms_contents';
+    protected $table = 'yuyu_learning_contents';
     protected $guarded = ['id'];
 
     protected $casts = [
@@ -22,7 +22,7 @@ class LmsContent extends Model
 
     protected static function booted()
     {
-        static::saving(function (LmsContent $content) {
+        static::saving(function (YuyuLearningContent $content) {
             if ($content->content_type !== 'quiz' || empty($content->frame_id)) {
                 return;
             }
@@ -39,12 +39,12 @@ class LmsContent extends Model
 
     public function section()
     {
-        return $this->belongsTo(LmsSection::class, 'section_id', 'id');
+        return $this->belongsTo(YuyuLearningSection::class, 'section_id', 'id');
     }
 
     public function progresses()
     {
-        return $this->hasMany(LmsContentProgress::class, 'content_id', 'id');
+        return $this->hasMany(YuyuLearningContentProgress::class, 'content_id', 'id');
     }
 
     /**
@@ -78,7 +78,7 @@ class LmsContent extends Model
         }
 
         $query = [
-            'lms_content_id' => $this->id,
+            'yuyu_learning_content_id' => $this->id,
         ];
         if (!empty($return_url)) {
             $query['return_url'] = $return_url;
