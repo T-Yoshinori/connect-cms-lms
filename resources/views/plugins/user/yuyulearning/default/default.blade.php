@@ -31,8 +31,8 @@
         <div class="alert alert-info mb-0">
             選択画面から、使用するLMSコースを選択するか、作成してください。
             <div class="mt-3">
-                <a href="{{ url('/') }}/plugin/lms/listCourses/{{ $page->id }}/{{ $frame->id }}#frame-{{ $frame->id }}" class="btn btn-primary btn-sm mr-2">コース選択</a>
-                <a href="{{ url('/') }}/plugin/lms/createCourse/{{ $page->id }}/{{ $frame->id }}#frame-{{ $frame->id }}" class="btn btn-outline-primary btn-sm">新規作成</a>
+                <a href="{{ url('/') }}/plugin/yuyulearning/listCourses/{{ $page->id }}/{{ $frame->id }}#frame-{{ $frame->id }}" class="btn btn-primary btn-sm mr-2">コース選択</a>
+                <a href="{{ url('/') }}/plugin/yuyulearning/createCourse/{{ $page->id }}/{{ $frame->id }}#frame-{{ $frame->id }}" class="btn btn-outline-primary btn-sm">新規作成</a>
             </div>
         </div>
     @else
@@ -48,11 +48,11 @@
         </div>
         @if ($can_manage)
             <div class="d-flex flex-wrap mt-2 mt-sm-0">
-                <a href="{{ url('/') }}/plugin/lms/adminProgress/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
+                <a href="{{ url('/') }}/plugin/yuyulearning/adminProgress/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
                    class="btn btn-outline-success btn-sm mr-2 mb-1">
                     <i class="fas fa-chart-bar"></i> 受講進捗
                 </a>
-                <a href="{{ url('/') }}/plugin/lms/editCourse/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
+                <a href="{{ url('/') }}/plugin/yuyulearning/editCourse/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
                    class="btn btn-outline-primary btn-sm mb-1">
                     コース編集
                 </a>
@@ -213,7 +213,7 @@
 
                                             @if ($content->content_type === 'custom' && $can_track_progress && $progress_status !== 'completed')
                                                 <form method="POST"
-                                                      action="{{ url('/') }}/plugin/lms/completeContent/{{ $page->id }}/{{ $frame->id }}/{{ $content->id }}"
+                                                      action="{{ url('/') }}/plugin/yuyulearning/completeContent/{{ $page->id }}/{{ $frame->id }}/{{ $content->id }}"
                                                       class="d-inline ml-2">
                                                     @csrf
                                                     <input type="hidden" name="return_url" value="{{ url($page->permanent_link) }}#frame-{{ $frame->id }}">
@@ -244,7 +244,7 @@
     var noticeTimer = null;
     var currentMaterial = null;
     var csrfToken = @json(csrf_token());
-    var actionBase = @json(url('/').'/plugin/lms/');
+    var actionBase = @json(url('/').'/plugin/yuyulearning/');
     var pageId = @json($page->id);
     var frameId = @json($frame->id);
 
@@ -347,7 +347,7 @@
         });
     }
 
-    function injectLmsNotice(win) {
+    function injectYuyuLearningNotice(win) {
         try {
             if (!win || win.closed || !win.document || !win.document.body || !currentMaterial) {
                 return;
@@ -476,7 +476,7 @@
                 noticeTimer = null;
                 return;
             }
-            injectLmsNotice(win);
+            injectYuyuLearningNotice(win);
         }, 500);
     }
 
@@ -506,7 +506,7 @@
             });
         }
 
-        materialWindow = window.open(link.href, 'lms_material_window', features);
+        materialWindow = window.open(link.href, 'yuyu_learning_material_window', features);
 
         if (!materialWindow) {
             window.location.href = link.href;

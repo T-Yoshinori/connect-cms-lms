@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('lms_enrollments', function (Blueprint $table) {
+        Schema::create('yuyu_learning_enrollments', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('course_id');
             $table->unsignedBigInteger('user_id');
@@ -20,7 +20,7 @@ return new class extends Migration
             $table->dateTime('completed_at')->nullable();
             $table->timestamps();
 
-            $table->foreign('course_id')->references('id')->on('lms_courses')->onDelete('cascade');
+            $table->foreign('course_id')->references('id')->on('yuyu_learning_courses')->onDelete('cascade');
             $table->unique(['course_id', 'user_id']);
             $table->index(['user_id', 'status']);
             $table->index('source_group_id');
@@ -29,7 +29,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('lms_enrollments');
+        Schema::dropIfExists('yuyu_learning_enrollments');
     }
 };
 

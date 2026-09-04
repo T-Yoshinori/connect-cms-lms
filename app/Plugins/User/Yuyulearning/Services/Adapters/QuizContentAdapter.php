@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Plugins\User\Lms\Services\Adapters;
+namespace App\Plugins\User\Yuyulearning\Services\Adapters;
 
 use Illuminate\Support\Facades\DB;
 
-use App\Models\User\Lms\LmsContent;
+use App\Models\User\YuyuLearning\YuyuLearningContent;
 use App\Models\User\Quizzes\Quizzes;
 use App\Models\User\Quizzes\QuizzesAttempts;
 
@@ -15,7 +15,7 @@ class QuizContentAdapter implements ContentStatusAdapterInterface
      *
      * 小テスト教材は実際の起動先である frame_id を正本とし、
      * quiz_frames に現在設定されている quiz_id を使用する。
-     * 既存の lms_contents.reference_id が不整合なら自動補正する。
+     * 既存の yuyu_learning_contents.reference_id が不整合なら自動補正する。
      *
      * - 合格済み、または合格判定なしで採点済み => completed
      * - 不合格でも再受験可能 => in_progress
@@ -23,7 +23,7 @@ class QuizContentAdapter implements ContentStatusAdapterInterface
      * - 受験中、提出済み、採点待ち => in_progress
      * - 未受験 => null
      */
-    public function resolveStatus(LmsContent $content, int $user_id): ?string
+    public function resolveStatus(YuyuLearningContent $content, int $user_id): ?string
     {
         $quiz_id = $this->resolveQuizId($content);
         if (empty($quiz_id)) {
@@ -101,7 +101,7 @@ class QuizContentAdapter implements ContentStatusAdapterInterface
         return 'in_progress';
     }
 
-    private function resolveQuizId(LmsContent $content): ?int
+    private function resolveQuizId(YuyuLearningContent $content): ?int
     {
         if (!empty($content->frame_id)) {
             $quiz_id = DB::table('quiz_frames')

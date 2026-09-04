@@ -2,7 +2,7 @@
 set -euo pipefail
 
 version="${1:-0.9.0-beta.1}"
-project_name="connect-cms-lms"
+project_name="connect-cms-yuyu-learning"
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 build_root="$(mktemp -d)"
 package_name="${project_name}-${version}"

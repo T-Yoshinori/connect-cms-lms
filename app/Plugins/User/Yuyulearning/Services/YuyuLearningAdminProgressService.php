@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Plugins\User\Lms\Services;
+namespace App\Plugins\User\Yuyulearning\Services;
 
 use Illuminate\Support\Facades\DB;
 
 use App\Enums\UserStatus;
 use App\Models\Common\Page;
-use App\Models\User\Lms\LmsCourse;
-use App\Models\User\Lms\LmsEnrollment;
+use App\Models\User\YuyuLearning\YuyuLearningCourse;
+use App\Models\User\YuyuLearning\YuyuLearningEnrollment;
 use App\User;
 
-class LmsAdminProgressService
+class YuyuLearningAdminProgressService
 {
-    public function build(LmsCourse $course, int $page_id): array
+    public function build(YuyuLearningCourse $course, int $page_id): array
     {
         $course->load([
             'sections' => function ($query) {
@@ -37,11 +37,11 @@ class LmsAdminProgressService
             ->where('is_required', true)
             ->pluck('id');
 
-        $existing_enrollments = LmsEnrollment::query()
+        $existing_enrollments = YuyuLearningEnrollment::query()
             ->where('course_id', $course->id)
             ->get();
 
-        $status_service = new LmsContentStatusService();
+        $status_service = new YuyuLearningContentStatusService();
         foreach ($existing_enrollments as $enrollment) {
             $status_service->syncAutomaticCompletions(
                 $enrollment,
@@ -50,7 +50,7 @@ class LmsAdminProgressService
             );
         }
 
-        $existing_enrollments = LmsEnrollment::query()
+        $existing_enrollments = YuyuLearningEnrollment::query()
             ->where('course_id', $course->id)
             ->with(['user', 'progresses'])
             ->get()
@@ -79,7 +79,7 @@ class LmsAdminProgressService
                 $user = $users->get($user_id);
 
                 if (!$enrollment) {
-                    $enrollment = new LmsEnrollment([
+                    $enrollment = new YuyuLearningEnrollment([
                         'course_id' => $course->id,
                         'user_id' => $user_id,
                         'status' => 'not_started',

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('lms_content_progress', function (Blueprint $table) {
+        Schema::create('yuyu_learning_content_progress', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('enrollment_id');
             $table->unsignedBigInteger('content_id');
@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('completion_source', 30)->nullable();
             $table->timestamps();
 
-            $table->foreign('enrollment_id')->references('id')->on('lms_enrollments')->onDelete('cascade');
-            $table->foreign('content_id')->references('id')->on('lms_contents')->onDelete('cascade');
+            $table->foreign('enrollment_id')->references('id')->on('yuyu_learning_enrollments')->onDelete('cascade');
+            $table->foreign('content_id')->references('id')->on('yuyu_learning_contents')->onDelete('cascade');
             $table->unique(['enrollment_id', 'content_id']);
             $table->index(['content_id', 'status']);
         });
@@ -27,7 +27,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('lms_content_progress');
+        Schema::dropIfExists('yuyu_learning_content_progress');
     }
 };
 

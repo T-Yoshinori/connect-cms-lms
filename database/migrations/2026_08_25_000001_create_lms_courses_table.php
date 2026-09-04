@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('lms_courses', function (Blueprint $table) {
+        Schema::create('yuyu_learning_courses', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name');
             $table->text('description')->nullable();
@@ -25,7 +25,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('lms_courses');
+        Schema::dropIfExists('yuyu_learning_courses');
     }
 };
 

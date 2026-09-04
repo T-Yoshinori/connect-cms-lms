@@ -8,7 +8,7 @@
     </li>
 @else
     <li role="presentation" class="nav-item">
-        <a href="{{ url('/') }}/plugin/lms/listCourses/{{ $page->id }}/{{ $frame->id }}#frame-{{ $frame->id }}" class="nav-link">コース選択</a>
+        <a href="{{ url('/') }}/plugin/yuyulearning/listCourses/{{ $page->id }}/{{ $frame->id }}#frame-{{ $frame->id }}" class="nav-link">コース選択</a>
     </li>
 @endif
 
@@ -18,7 +18,7 @@
     </li>
 @else
     <li role="presentation" class="nav-item">
-        <a href="{{ url('/') }}/plugin/lms/createCourse/{{ $page->id }}/{{ $frame->id }}#frame-{{ $frame->id }}" class="nav-link">新規作成</a>
+        <a href="{{ url('/') }}/plugin/yuyulearning/createCourse/{{ $page->id }}/{{ $frame->id }}#frame-{{ $frame->id }}" class="nav-link">新規作成</a>
     </li>
 @endif
 
@@ -28,7 +28,7 @@
     </li>
 @else
     <li role="presentation" class="nav-item">
-        <a href="{{ url('/') }}/plugin/lms/editBucketsRoles/{{ $page->id }}/{{ $frame->id }}#frame-{{ $frame->id }}" class="nav-link">権限設定</a>
+        <a href="{{ url('/') }}/plugin/yuyulearning/editBucketsRoles/{{ $page->id }}/{{ $frame->id }}#frame-{{ $frame->id }}" class="nav-link">権限設定</a>
     </li>
 @endif
 

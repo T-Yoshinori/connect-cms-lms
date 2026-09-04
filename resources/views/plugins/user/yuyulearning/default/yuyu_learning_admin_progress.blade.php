@@ -30,7 +30,7 @@
         <div class="text-muted">{{ $course->name }}</div>
     </div>
     <div class="d-flex flex-wrap mt-2 mt-sm-0">
-        <a href="{{ url('/') }}/plugin/lms/editCourse/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
+        <a href="{{ url('/') }}/plugin/yuyulearning/editCourse/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
            class="btn btn-outline-primary btn-sm mr-2 mb-1">
             コース編集
         </a>

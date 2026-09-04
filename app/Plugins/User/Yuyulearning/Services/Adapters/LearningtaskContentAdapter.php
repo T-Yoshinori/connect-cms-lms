@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Plugins\User\Lms\Services\Adapters;
+namespace App\Plugins\User\Yuyulearning\Services\Adapters;
 
 use Illuminate\Support\Facades\DB;
-use App\Models\User\Lms\LmsContent;
+use App\Models\User\YuyuLearning\YuyuLearningContent;
 
 class LearningtaskContentAdapter implements ContentStatusAdapterInterface
 {
-    public function resolveStatus(LmsContent $content, int $user_id): ?string
+    public function resolveStatus(YuyuLearningContent $content, int $user_id): ?string
     {
         if (empty($content->reference_id)) {
             return null;

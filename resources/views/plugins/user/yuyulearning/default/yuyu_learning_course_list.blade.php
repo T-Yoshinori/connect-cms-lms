@@ -1,7 +1,7 @@
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
-    @include('plugins.user.lms.lms_frame_edit_tab')
+    @include('plugins.user.yuyulearning.yuyu_learning_frame_edit_tab')
 @endsection
 
 @section("plugin_setting_$frame->id")
@@ -19,7 +19,7 @@
                 使用できるコースはありません。「新規作成」からコースを作成してください。
             </div>
         @else
-            <form action="{{ url('/redirect/plugin/lms/selectCourse/' . $page->id . '/' . $frame->id) }}"
+            <form action="{{ url('/redirect/plugin/yuyulearning/selectCourse/' . $page->id . '/' . $frame->id) }}"
                   method="POST">
                 @csrf
 

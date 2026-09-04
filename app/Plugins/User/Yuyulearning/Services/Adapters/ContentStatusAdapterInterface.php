@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Plugins\User\Lms\Services\Adapters;
+namespace App\Plugins\User\Yuyulearning\Services\Adapters;
 
-use App\Models\User\Lms\LmsContent;
+use App\Models\User\YuyuLearning\YuyuLearningContent;
 
 interface ContentStatusAdapterInterface
 {
@@ -12,6 +12,6 @@ interface ContentStatusAdapterInterface
      * completed / failed / in_progress を返す。
      * LMS側で状態を確定できない場合は null を返す。
      */
-    public function resolveStatus(LmsContent $content, int $user_id): ?string;
+    public function resolveStatus(YuyuLearningContent $content, int $user_id): ?string;
 }
 
