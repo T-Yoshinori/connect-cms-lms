@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('lms_contents', function (Blueprint $table) {
+        Schema::create('yuyu_learning_contents', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('section_id');
             $table->string('title');
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
 
-            $table->foreign('section_id')->references('id')->on('lms_sections')->onDelete('cascade');
+            $table->foreign('section_id')->references('id')->on('yuyu_learning_sections')->onDelete('cascade');
             $table->index(['section_id', 'sort_order']);
             $table->index(['content_type', 'reference_id']);
         });
@@ -30,7 +30,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('lms_contents');
+        Schema::dropIfExists('yuyu_learning_contents');
     }
 };
-

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('lms_courses', function (Blueprint $table) {
+        Schema::table('yuyu_learning_courses', function (Blueprint $table) {
             $table->string('created_name')->nullable()->after('created_id');
             $table->string('updated_name')->nullable()->after('updated_id');
         });
@@ -16,9 +16,8 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('lms_courses', function (Blueprint $table) {
+        Schema::table('yuyu_learning_courses', function (Blueprint $table) {
             $table->dropColumn(['created_name', 'updated_name']);
         });
     }
 };
-
