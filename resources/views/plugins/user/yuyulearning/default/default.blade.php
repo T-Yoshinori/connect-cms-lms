@@ -13,6 +13,7 @@
 
 @php
     $can_manage = $can_manage ?? false;
+    $can_view_progress = $can_view_progress ?? false;
     $course = $course ?? null;
     $enrollment = $enrollment ?? null;
     $progresses = $progresses ?? collect();
@@ -56,16 +57,20 @@
                 <div class="text-muted">{!! nl2br(e($course->description)) !!}</div>
             @endif
         </div>
-        @if ($can_manage)
+        @if ($can_view_progress || $can_manage)
             <div class="d-flex flex-wrap mt-2 mt-sm-0">
-                <a href="{{ url('/') }}/plugin/yuyulearning/adminProgress/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
-                   class="btn btn-outline-success btn-sm mr-2 mb-1">
-                    <i class="fas fa-chart-bar"></i> 受講進捗
-                </a>
-                <a href="{{ url('/') }}/plugin/yuyulearning/editCourse/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
-                   class="btn btn-outline-primary btn-sm mb-1">
-                    コース編集
-                </a>
+                @if ($can_view_progress)
+                    <a href="{{ url('/') }}/plugin/yuyulearning/adminProgress/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
+                       class="btn btn-outline-success btn-sm mr-2 mb-1">
+                        <i class="fas fa-chart-bar"></i> 受講進捗
+                    </a>
+                @endif
+                @if ($can_manage)
+                    <a href="{{ url('/') }}/plugin/yuyulearning/editCourse/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
+                       class="btn btn-outline-primary btn-sm mb-1">
+                        コース編集
+                    </a>
+                @endif
             </div>
         @endif
     </div>
