@@ -77,7 +77,7 @@ class YuyulearningPlugin extends UserPluginBase
             'selectCourse' => ['role_article_admin'],
             'createCourse' => ['role_article_admin'],
             'editCourse' => ['role_article_admin'],
-            'adminProgress' => ['role_article_admin'],
+            'adminProgress' => ['role_article'],
             'saveCourse' => ['role_article_admin'],
             'createSection' => ['role_article_admin'],
             'editSection' => ['role_article_admin'],
@@ -154,6 +154,7 @@ class YuyulearningPlugin extends UserPluginBase
     public function index($request,$page_id,$frame_id)
     {
         $can_manage = $this->checkRoleFromFrame(Auth::user(),'role_article_admin',$this->frame);
+        $can_view_progress = $this->checkRoleFromFrame(Auth::user(),'role_article',$this->frame);
         $yuyu_learning_frame = $this->getOrCreateYuyuLearningFrame($frame_id);
         $course = null; $enrollment = null; $progresses = collect(); $course_progress = null;
         if(!empty($yuyu_learning_frame->course_id)){
@@ -185,7 +186,7 @@ class YuyulearningPlugin extends UserPluginBase
                 'completed_at'=>$enrollment->completed_at,
             ];
         }
-        return $this->view('default',compact('page_id','frame_id','can_manage','course','enrollment','progresses','course_progress','yuyu_learning_frame'));
+        return $this->view('default',compact('page_id','frame_id','can_manage','can_view_progress','course','enrollment','progresses','course_progress','yuyu_learning_frame'));
     }
 
     public function downloadCertificate($request,$page_id,$frame_id)
@@ -233,6 +234,7 @@ class YuyulearningPlugin extends UserPluginBase
 
     public function adminProgress($request,$page_id,$frame_id,$course_id)
     {
+        $can_manage = $this->checkRoleFromFrame(Auth::user(),'role_article_admin',$this->frame);
         $course=YuyuLearningCourse::findOrFail($course_id);
         $report=(new YuyuLearningAdminProgressService())->build($course,(int)$page_id);
 
@@ -241,6 +243,7 @@ class YuyulearningPlugin extends UserPluginBase
             'frame_id'=>$frame_id,
             'course'=>$course,
             'report'=>$report,
+            'can_manage'=>$can_manage,
         ]);
     }
 

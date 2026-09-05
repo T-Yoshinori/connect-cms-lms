@@ -12,6 +12,7 @@
 @section("plugin_contents_$frame->id")
 
 @php
+    $can_manage = $can_manage ?? false;
     $status_labels = [
         'not_started' => '未着手',
         'in_progress' => '学習中',
@@ -39,10 +40,14 @@
         <div class="text-muted">{{ $course->name }}</div>
     </div>
     <div class="d-flex flex-wrap mt-2 mt-sm-0">
-        <a href="{{ url('/') }}/plugin/yuyulearning/editCourse/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
-           class="btn btn-outline-primary btn-sm mr-2 mb-1">
-            コース編集
-        </a>
+        @if ($can_manage)
+            <a href="{{ url('/') }}/plugin/yuyulearning/editCourse/{{ $page->id }}/{{ $frame->id }}/{{ $course->id }}#frame-{{ $frame->id }}"
+               class="btn btn-outline-primary btn-sm mr-2 mb-1">
+                コース編集
+            </a>
+        @else
+            <span class="badge badge-secondary align-self-center mr-2 mb-1 px-2 py-2">閲覧専用</span>
+        @endif
         <a href="{{ URL::to($page->permanent_link) }}#frame-{{ $frame->id }}"
            class="btn btn-secondary btn-sm mb-1">
             コース目次へ戻る
@@ -113,7 +118,8 @@
                                 @endif
                             </div>
                             @if (
-                                $content->content_type === 'questionnaire'
+                                $can_manage
+                                && $content->content_type === 'questionnaire'
                                 && !empty($content->page_id)
                                 && !empty($content->frame_id)
                                 && !empty($content->reference_id)
