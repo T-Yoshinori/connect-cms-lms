@@ -199,6 +199,7 @@
                                                    class="lms-material-launch"
                                                    data-lms-content-id="{{ $content->id }}"
                                                    data-lms-content-type="{{ $content->content_type }}"
+                                                   data-lms-material-frame-id="{{ $content->frame_id }}"
                                                    data-lms-external="{{ $is_external ? '1' : '0' }}"
                                                    data-lms-track="{{ $can_track_progress ? '1' : '0' }}">
                                                     {{ $content->title }}
@@ -233,6 +234,7 @@
                                                    class="btn btn-outline-primary btn-sm ml-2 lms-material-launch"
                                                    data-lms-content-id="{{ $content->id }}"
                                                    data-lms-content-type="{{ $content->content_type }}"
+                                                   data-lms-material-frame-id="{{ $content->frame_id }}"
                                                    data-lms-external="{{ $is_external ? '1' : '0' }}"
                                                    data-lms-track="{{ $can_track_progress ? '1' : '0' }}">
                                                     教材を開く<i class="fas fa-external-link-alt ml-1"></i>
@@ -275,6 +277,7 @@
     var currentMaterial = null;
     var csrfToken = @json(csrf_token());
     var actionBase = @json(url('/').'/plugin/yuyulearning/');
+    var jsonActionBase = @json(url('/').'/json/yuyulearning/');
     var pageId = @json($page->id);
     var frameId = @json($frame->id);
 
@@ -294,6 +297,635 @@
                 'X-Requested-With': 'XMLHttpRequest'
             },
             body: body.toString()
+        });
+    }
+
+    function annotationUrl(action, id) {
+        return jsonActionBase + action + '/' + pageId + '/' + frameId + '/' + id;
+    }
+
+    function readAnnotationJson(response) {
+        return response.text().then(function (text) {
+            var json = null;
+            try {
+                json = text ? JSON.parse(text) : {};
+            } catch (e) {
+                json = null;
+            }
+            if (!response.ok) {
+                var detail = json && json.message ? json.message : '';
+                if (response.status === 403) {
+                    detail = '注釈を操作する権限を確認できません。';
+                } else if (response.status === 419) {
+                    detail = 'ログイン状態の有効期限が切れています。ページを再読み込みしてください。';
+                } else if (response.status === 422 && json && json.errors) {
+                    var errorKeys = Object.keys(json.errors);
+                    if (errorKeys.length && json.errors[errorKeys[0]].length) {
+                        detail = json.errors[errorKeys[0]][0];
+                    }
+                }
+                throw new Error('HTTP ' + response.status + (detail ? '：' + detail : ''));
+            }
+            if (!json) {
+                throw new Error('HTTP ' + response.status + '：サーバーからJSON形式ではない応答が返されました。');
+            }
+            return json;
+        });
+    }
+
+    function fetchAnnotations(contentId, blogPostIds) {
+        var url = annotationUrl('listAnnotations', contentId);
+        if (blogPostIds && blogPostIds.length) {
+            url += '?blog_post_ids=' + encodeURIComponent(blogPostIds.join(','));
+        }
+        return fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(readAnnotationJson);
+    }
+
+    function postAnnotation(action, id, values) {
+        var body = new URLSearchParams();
+        body.append('_token', csrfToken);
+        Object.keys(values || {}).forEach(function (key) {
+            if (values[key] !== null && values[key] !== undefined) {
+                body.append(key, values[key]);
+            }
+        });
+
+        return fetch(annotationUrl(action, id), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: body.toString()
+        }).then(readAnnotationJson);
+    }
+
+    function installAnnotationTools(win, notice, buttons, material) {
+        if (win.__yuyuLearningAnnotationsInstalled || !material.canTrack ||
+            (material.type !== 'general' && material.type !== 'blog')) {
+            return;
+        }
+
+        var doc = win.document;
+        var materialRoot = doc.getElementById('frame-' + material.materialFrameId);
+        if (!materialRoot) {
+            return;
+        }
+        win.__yuyuLearningAnnotationsInstalled = true;
+
+        var state = {mode: null, color: 'yellow', annotations: []};
+        var excludedSelector = '#lms-material-window-notice, script, style, noscript, button, input, textarea, select, [data-yuyu-ignore-text]';
+        var colors = {
+            yellow: '#ffe066',
+            green: '#8ce99a',
+            blue: '#74c0fc',
+            pink: '#faa2c1'
+        };
+
+        var style = doc.createElement('style');
+        style.textContent =
+            '.yuyu-annotation-toolbar{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-right:8px}' +
+            '.yuyu-annotation-tool{padding:4px 9px;border:1px solid #856404;border-radius:4px;background:#fff;color:#856404;cursor:pointer}' +
+            '.yuyu-annotation-tool.is-active{box-shadow:0 0 0 2px #856404 inset;font-weight:bold}' +
+            '.yuyu-annotation-color{width:27px;height:27px;border:1px solid #777;border-radius:50%;cursor:pointer}' +
+            '.yuyu-annotation-color.is-active{box-shadow:0 0 0 3px #fff,0 0 0 5px #856404}' +
+            '.yuyu-annotation-mark{padding:.05em .02em;border-radius:2px;box-shadow:inset 0 -2px rgba(0,0,0,.12);cursor:pointer}' +
+            '.yuyu-annotation-note-icon{margin:0 3px;padding:1px 4px;border:2px solid #b93815;border-radius:5px;background:#fff4e6;color:#c2410c;cursor:pointer;vertical-align:super;font-size:19px;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,.25)}' +
+            '.yuyu-annotations-hidden .yuyu-annotation-mark{background-color:transparent!important;box-shadow:none;cursor:text}' +
+            '.yuyu-annotations-hidden .yuyu-annotation-note-icon{display:none!important}' +
+            '.yuyu-annotation-panel{display:none;position:fixed;right:12px;top:70px;z-index:2147483647;width:min(420px,calc(100vw - 24px));max-height:70vh;overflow:auto;padding:12px;background:#fff;border:1px solid #856404;border-radius:6px;box-shadow:0 4px 15px rgba(0,0,0,.25);color:#333}' +
+            '.yuyu-annotation-actions{display:none;position:fixed;z-index:2147483647;min-width:260px;max-width:calc(100vw - 24px);padding:10px;background:#fff;border:2px solid #856404;border-radius:6px;box-shadow:0 4px 15px rgba(0,0,0,.3);color:#333}' +
+            '.yuyu-annotation-actions textarea{width:100%;min-height:80px;margin:6px 0;padding:6px;border:1px solid #aaa;border-radius:4px}' +
+            '.yuyu-annotation-item{padding:8px 0;border-bottom:1px solid #ddd}' +
+            '.yuyu-annotation-item:last-child{border-bottom:0}';
+        doc.head.appendChild(style);
+
+        var actionPanel = doc.createElement('div');
+        actionPanel.className = 'yuyu-annotation-actions';
+        actionPanel.setAttribute('data-yuyu-ignore-text', '1');
+        doc.body.appendChild(actionPanel);
+
+        function annotationValues(annotation) {
+            return {
+                annotation_id: annotation.id,
+                annotation_type: annotation.annotation_type,
+                blog_post_id: annotation.blog_post_id,
+                color: annotation.color,
+                selected_text: annotation.selected_text,
+                prefix_text: annotation.prefix_text,
+                suffix_text: annotation.suffix_text,
+                start_offset: annotation.start_offset,
+                end_offset: annotation.end_offset,
+                note: annotation.note
+            };
+        }
+
+        function deleteAnnotationRecord(annotation) {
+            if (!win.confirm('この注釈を削除しますか。')) {
+                return;
+            }
+            postAnnotation('deleteAnnotation', annotation.id, {}).then(function () {
+                removeRendered(annotation.id);
+                state.annotations = state.annotations.filter(function (row) { return row.id !== annotation.id; });
+                actionPanel.style.display = 'none';
+                refreshPanel();
+            }).catch(function (error) {
+                win.alert('注釈を削除できませんでした。\n' + error.message);
+            });
+        }
+
+        function positionActionPanel(anchor) {
+            var rect = anchor.getBoundingClientRect();
+            var left = Math.min(rect.left, win.innerWidth - 280);
+            actionPanel.style.left = Math.max(12, left) + 'px';
+            actionPanel.style.top = Math.min(rect.bottom + 8, win.innerHeight - 210) + 'px';
+            actionPanel.style.display = 'block';
+        }
+
+        function actionButton(label, className) {
+            var button = doc.createElement('button');
+            button.type = 'button';
+            button.className = className || 'btn btn-sm btn-outline-secondary';
+            button.textContent = label;
+            return button;
+        }
+
+        function openAnnotationActions(annotation, anchor) {
+            actionPanel.innerHTML = '';
+            var heading = doc.createElement('div');
+            heading.className = 'font-weight-bold mb-2';
+            heading.textContent = annotation.annotation_type === 'highlight' ? 'マーカーの操作' : 'メモの操作';
+            actionPanel.appendChild(heading);
+
+            if (annotation.annotation_type === 'highlight') {
+                var colorRow = doc.createElement('div');
+                colorRow.className = 'd-flex flex-wrap align-items-center mb-2';
+                Object.keys(colors).forEach(function (color) {
+                    var colorButton = doc.createElement('button');
+                    colorButton.type = 'button';
+                    colorButton.className = 'yuyu-annotation-color mr-2' + (color === annotation.color ? ' is-active' : '');
+                    colorButton.style.backgroundColor = colors[color];
+                    colorButton.title = color;
+                    colorButton.setAttribute('aria-label', color + 'へ変更');
+                    colorButton.addEventListener('click', function () {
+                        var values = annotationValues(annotation);
+                        values.color = color;
+                        postAnnotation('saveAnnotation', material.id, values).then(function (json) {
+                            annotation.color = json.annotation.color;
+                            materialRoot.querySelectorAll('.yuyu-annotation-mark[data-yuyu-annotation="' + annotation.id + '"]').forEach(function (mark) {
+                                mark.style.backgroundColor = colors[annotation.color];
+                            });
+                            actionPanel.style.display = 'none';
+                            refreshPanel();
+                        }).catch(function (error) {
+                            win.alert('マーカー色を変更できませんでした。\n' + error.message);
+                        });
+                    });
+                    colorRow.appendChild(colorButton);
+                });
+                actionPanel.appendChild(colorRow);
+            } else {
+                var textarea = doc.createElement('textarea');
+                textarea.value = annotation.note || '';
+                textarea.setAttribute('aria-label', 'メモ本文');
+                actionPanel.appendChild(textarea);
+                var saveButton = actionButton('保存', 'btn btn-sm btn-primary mr-2');
+                saveButton.addEventListener('click', function () {
+                    if (!textarea.value.trim()) {
+                        win.alert('メモを入力してください。');
+                        return;
+                    }
+                    var values = annotationValues(annotation);
+                    values.note = textarea.value.trim();
+                    postAnnotation('saveAnnotation', material.id, values).then(function (json) {
+                        annotation.note = json.annotation.note;
+                        materialRoot.querySelectorAll('.yuyu-annotation-note-icon[data-yuyu-annotation="' + annotation.id + '"]').forEach(function (icon) {
+                            icon.title = annotation.note;
+                        });
+                        actionPanel.style.display = 'none';
+                        refreshPanel();
+                    }).catch(function (error) {
+                        win.alert('メモを更新できませんでした。\n' + error.message);
+                    });
+                });
+                actionPanel.appendChild(saveButton);
+            }
+
+            var deleteButton = actionButton('削除', 'btn btn-sm btn-danger mr-2');
+            deleteButton.addEventListener('click', function () { deleteAnnotationRecord(annotation); });
+            actionPanel.appendChild(deleteButton);
+            var closeButton = actionButton('閉じる');
+            closeButton.addEventListener('click', function () { actionPanel.style.display = 'none'; });
+            actionPanel.appendChild(closeButton);
+            positionActionPanel(anchor);
+        }
+
+        function blogPostId(article) {
+            if (!article) {
+                return null;
+            }
+            var dataId = article.getAttribute('data-blog-post-id');
+            if (dataId && /^\d+$/.test(dataId)) {
+                return Number(dataId);
+            }
+            var link = article.querySelector('a[href*="/plugin/blogs/show/"]');
+            var match = link ? link.getAttribute('href').match(/\/plugin\/blogs\/show\/\d+\/\d+\/(\d+)/) : null;
+            if (match) {
+                return Number(match[1]);
+            }
+            match = win.location.pathname.match(/\/plugin\/blogs\/show\/\d+\/\d+\/(\d+)/);
+            return match ? Number(match[1]) : null;
+        }
+
+        function visibleBlogRoots() {
+            if (material.type !== 'blog') {
+                return [];
+            }
+            return Array.prototype.slice.call(materialRoot.querySelectorAll('article')).map(function (article) {
+                return {root: article, blogPostId: blogPostId(article)};
+            }).filter(function (item) { return item.blogPostId; });
+        }
+
+        function annotationRoot(annotation) {
+            if (material.type !== 'blog') {
+                return materialRoot;
+            }
+            var targetId = Number(annotation.blog_post_id);
+            var item = visibleBlogRoots().find(function (candidate) {
+                return candidate.blogPostId === targetId;
+            });
+            return item ? item.root : null;
+        }
+
+        function textNodes(scopeRoot) {
+            var nodes = [];
+            var walker = doc.createTreeWalker(scopeRoot, win.NodeFilter.SHOW_TEXT, {
+                acceptNode: function (node) {
+                    var parent = node.parentElement;
+                    if (!parent || parent.closest(excludedSelector)) {
+                        return win.NodeFilter.FILTER_REJECT;
+                    }
+                    return win.NodeFilter.FILTER_ACCEPT;
+                }
+            });
+            var node;
+            while ((node = walker.nextNode())) {
+                nodes.push(node);
+            }
+            return nodes;
+        }
+
+        function plainText(scopeRoot) {
+            return textNodes(scopeRoot).map(function (node) { return node.nodeValue; }).join('');
+        }
+
+        function selectionData() {
+            var selection = win.getSelection();
+            if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+                return null;
+            }
+            var range = selection.getRangeAt(0);
+            if (!materialRoot.contains(range.commonAncestorContainer)) {
+                return null;
+            }
+            var scopeRoot = materialRoot;
+            var selectedBlogPostId = null;
+            if (material.type === 'blog') {
+                var startElement = range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement;
+                var endElement = range.endContainer.nodeType === 1 ? range.endContainer : range.endContainer.parentElement;
+                var startArticle = startElement ? startElement.closest('article') : null;
+                var endArticle = endElement ? endElement.closest('article') : null;
+                if (!startArticle || startArticle !== endArticle || !materialRoot.contains(startArticle)) {
+                    win.alert('ブログでは1つの記事内の文字列を選択してください。');
+                    return null;
+                }
+                selectedBlogPostId = blogPostId(startArticle);
+                if (!selectedBlogPostId) {
+                    win.alert('ブログ記事を特定できませんでした。個別記事を開いて、もう一度操作してください。');
+                    return null;
+                }
+                scopeRoot = startArticle;
+            }
+            var nodes = textNodes(scopeRoot);
+            var start = 0;
+            var end = 0;
+            var offset = 0;
+            var foundStart = false;
+            var foundEnd = false;
+            nodes.forEach(function (node) {
+                if (node === range.startContainer) {
+                    start = offset + range.startOffset;
+                    foundStart = true;
+                }
+                if (node === range.endContainer) {
+                    end = offset + range.endOffset;
+                    foundEnd = true;
+                }
+                offset += node.nodeValue.length;
+            });
+            if (!foundStart || !foundEnd || end <= start) {
+                return null;
+            }
+            var allText = plainText(scopeRoot);
+            var selected = allText.substring(start, end);
+            if (!selected.trim()) {
+                return null;
+            }
+            return {
+                selected_text: selected,
+                prefix_text: allText.substring(Math.max(0, start - 80), start),
+                suffix_text: allText.substring(end, Math.min(allText.length, end + 80)),
+                start_offset: start,
+                end_offset: end,
+                blog_post_id: selectedBlogPostId
+            };
+        }
+
+        function overlapsExisting(data) {
+            return state.annotations.some(function (annotation) {
+                return Number(data.blog_post_id || 0) === Number(annotation.blog_post_id || 0) &&
+                    data.start_offset < annotation.end_offset && data.end_offset > annotation.start_offset;
+            });
+        }
+
+        function rangeParts(scopeRoot, start, end) {
+            var parts = [];
+            var offset = 0;
+            textNodes(scopeRoot).forEach(function (node) {
+                var nodeStart = offset;
+                var nodeEnd = offset + node.nodeValue.length;
+                var partStart = Math.max(start, nodeStart);
+                var partEnd = Math.min(end, nodeEnd);
+                if (partStart < partEnd) {
+                    parts.push({node: node, start: partStart - nodeStart, end: partEnd - nodeStart});
+                }
+                offset = nodeEnd;
+            });
+            return parts;
+        }
+
+        function locate(annotation, scopeRoot) {
+            var text = plainText(scopeRoot);
+            var start = Number(annotation.start_offset);
+            var end = Number(annotation.end_offset);
+            if (text.substring(start, end) === annotation.selected_text) {
+                return {start: start, end: end};
+            }
+            var needle = (annotation.prefix_text || '') + annotation.selected_text + (annotation.suffix_text || '');
+            var contextAt = needle ? text.indexOf(needle) : -1;
+            if (contextAt >= 0) {
+                start = contextAt + (annotation.prefix_text || '').length;
+                return {start: start, end: start + annotation.selected_text.length};
+            }
+            start = text.indexOf(annotation.selected_text);
+            return start >= 0 ? {start: start, end: start + annotation.selected_text.length} : null;
+        }
+
+        function renderAnnotation(annotation) {
+            var scopeRoot = annotationRoot(annotation);
+            if (!scopeRoot) {
+                return;
+            }
+            var location = locate(annotation, scopeRoot);
+            if (!location) {
+                annotation.unresolved = true;
+                return;
+            }
+            annotation.start_offset = location.start;
+            annotation.end_offset = location.end;
+            var parts = rangeParts(scopeRoot, location.start, location.end);
+            if (!parts.length) {
+                annotation.unresolved = true;
+                return;
+            }
+            if (annotation.annotation_type === 'highlight') {
+                parts.slice().reverse().forEach(function (part) {
+                    var range = doc.createRange();
+                    range.setStart(part.node, part.start);
+                    range.setEnd(part.node, part.end);
+                    var mark = doc.createElement('mark');
+                    mark.className = 'yuyu-annotation-mark';
+                    mark.setAttribute('data-yuyu-annotation', annotation.id);
+                    mark.style.backgroundColor = colors[annotation.color] || colors.yellow;
+                    mark.title = 'クリックして色変更・削除';
+                    mark.addEventListener('click', function (event) {
+                        if (materialRoot.classList.contains('yuyu-annotations-hidden')) {
+                            return;
+                        }
+                        event.preventDefault();
+                        event.stopPropagation();
+                        openAnnotationActions(annotation, mark);
+                    });
+                    range.surroundContents(mark);
+                });
+            } else {
+                var last = parts[parts.length - 1];
+                var iconRange = doc.createRange();
+                iconRange.setStart(last.node, last.end);
+                iconRange.collapse(true);
+                var icon = doc.createElement('button');
+                icon.type = 'button';
+                icon.className = 'yuyu-annotation-note-icon';
+                icon.setAttribute('data-yuyu-annotation', annotation.id);
+                icon.setAttribute('data-yuyu-ignore-text', '1');
+                icon.title = annotation.note;
+                icon.setAttribute('aria-label', 'メモを編集・削除');
+                icon.innerHTML = '<i class="fas fa-comment-alt" aria-hidden="true"></i>';
+                icon.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    openAnnotationActions(annotation, icon);
+                });
+                iconRange.insertNode(icon);
+            }
+        }
+
+        function removeRendered(annotationId) {
+            materialRoot.querySelectorAll('[data-yuyu-annotation="' + annotationId + '"]').forEach(function (element) {
+                if (element.classList.contains('yuyu-annotation-mark')) {
+                    var parent = element.parentNode;
+                    while (element.firstChild) {
+                        parent.insertBefore(element.firstChild, element);
+                    }
+                    parent.removeChild(element);
+                    parent.normalize();
+                } else {
+                    element.remove();
+                }
+            });
+        }
+
+        var panel = doc.createElement('div');
+        panel.className = 'yuyu-annotation-panel';
+        panel.setAttribute('data-yuyu-ignore-text', '1');
+        doc.body.appendChild(panel);
+
+        function refreshPanel() {
+            panel.innerHTML = '';
+            var heading = doc.createElement('div');
+            heading.className = 'd-flex justify-content-between align-items-center mb-2';
+            heading.innerHTML = '<strong>自分の注釈</strong>';
+            var close = doc.createElement('button');
+            close.type = 'button';
+            close.className = 'btn btn-sm btn-outline-secondary';
+            close.textContent = '閉じる';
+            close.addEventListener('click', function () { panel.style.display = 'none'; });
+            heading.appendChild(close);
+            panel.appendChild(heading);
+            if (!state.annotations.length) {
+                var empty = doc.createElement('div');
+                empty.className = 'text-muted small';
+                empty.textContent = '注釈はまだありません。';
+                panel.appendChild(empty);
+                return;
+            }
+            state.annotations.forEach(function (annotation) {
+                var item = doc.createElement('div');
+                item.className = 'yuyu-annotation-item';
+                var label = doc.createElement('div');
+                label.className = 'small';
+                label.textContent = (annotation.unresolved ? '【位置を確認できません】' : '') +
+                    (annotation.annotation_type === 'highlight' ? 'マーカー：' : 'メモ：') + annotation.selected_text;
+                item.appendChild(label);
+                if (annotation.annotation_type === 'note') {
+                    var note = doc.createElement('div');
+                    note.className = 'mt-1';
+                    note.textContent = annotation.note;
+                    item.appendChild(note);
+                }
+                var remove = doc.createElement('button');
+                remove.type = 'button';
+                remove.className = 'btn btn-sm btn-outline-danger mt-1';
+                remove.textContent = '削除';
+                remove.addEventListener('click', function () {
+                    deleteAnnotationRecord(annotation);
+                });
+                item.appendChild(remove);
+                panel.appendChild(item);
+            });
+        }
+
+        var toolbar = doc.createElement('div');
+        toolbar.className = 'yuyu-annotation-toolbar';
+        toolbar.setAttribute('data-yuyu-ignore-text', '1');
+        var modeButtons = [];
+
+        function setMode(mode) {
+            state.mode = state.mode === mode ? null : mode;
+            modeButtons.forEach(function (button) {
+                button.classList.toggle('is-active', button.getAttribute('data-mode') === state.mode);
+            });
+        }
+
+        function addModeButton(label, mode) {
+            var button = doc.createElement('button');
+            button.type = 'button';
+            button.className = 'yuyu-annotation-tool';
+            button.setAttribute('data-mode', mode);
+            button.textContent = label;
+            button.addEventListener('click', function () { setMode(mode); });
+            toolbar.appendChild(button);
+            modeButtons.push(button);
+        }
+        addModeButton('マーカー', 'highlight');
+        addModeButton('メモ', 'note');
+
+        Object.keys(colors).forEach(function (color) {
+            var button = doc.createElement('button');
+            button.type = 'button';
+            button.className = 'yuyu-annotation-color' + (color === state.color ? ' is-active' : '');
+            button.style.backgroundColor = colors[color];
+            button.title = color;
+            button.setAttribute('aria-label', color + 'のマーカー');
+            button.addEventListener('click', function () {
+                state.color = color;
+                toolbar.querySelectorAll('.yuyu-annotation-color').forEach(function (item) { item.classList.remove('is-active'); });
+                button.classList.add('is-active');
+                if (state.mode !== 'highlight') {
+                    setMode('highlight');
+                }
+            });
+            toolbar.appendChild(button);
+        });
+
+        var listButton = doc.createElement('button');
+        listButton.type = 'button';
+        listButton.className = 'yuyu-annotation-tool';
+        listButton.textContent = '注釈一覧';
+        listButton.addEventListener('click', function () {
+            refreshPanel();
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        });
+        toolbar.appendChild(listButton);
+
+        var visibilityButton = doc.createElement('button');
+        visibilityButton.type = 'button';
+        visibilityButton.className = 'yuyu-annotation-tool';
+        visibilityButton.textContent = '注釈を隠す';
+        visibilityButton.setAttribute('aria-pressed', 'false');
+        visibilityButton.addEventListener('click', function () {
+            var hidden = materialRoot.classList.toggle('yuyu-annotations-hidden');
+            visibilityButton.textContent = hidden ? '注釈を表示' : '注釈を隠す';
+            visibilityButton.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+            if (hidden) {
+                panel.style.display = 'none';
+                state.mode = null;
+                modeButtons.forEach(function (button) { button.classList.remove('is-active'); });
+            }
+        });
+        toolbar.appendChild(visibilityButton);
+        buttons.insertBefore(toolbar, buttons.firstChild);
+
+        function saveSelection() {
+            if (!state.mode) {
+                return;
+            }
+            var data = selectionData();
+            if (!data) {
+                return;
+            }
+            if (overlapsExisting(data)) {
+                win.alert('すでに注釈がある範囲には重ねて注釈を付けられません。');
+                return;
+            }
+            data.annotation_type = state.mode;
+            data.color = state.mode === 'highlight' ? state.color : null;
+            if (state.mode === 'note') {
+                var note = win.prompt('メモを入力してください。', '');
+                if (note === null || !note.trim()) {
+                    return;
+                }
+                data.note = note.trim();
+            }
+            postAnnotation('saveAnnotation', material.id, data).then(function (json) {
+                state.annotations.push(json.annotation);
+                renderAnnotation(json.annotation);
+                refreshPanel();
+                win.getSelection().removeAllRanges();
+            }).catch(function (error) { win.alert('注釈を保存できませんでした。\n' + error.message); });
+        }
+
+        materialRoot.addEventListener('mouseup', saveSelection);
+        materialRoot.addEventListener('touchend', function () { win.setTimeout(saveSelection, 100); });
+
+        var displayedBlogPostIds = visibleBlogRoots().map(function (item) { return item.blogPostId; });
+        fetchAnnotations(material.id, displayedBlogPostIds).then(function (json) {
+            state.annotations = json.annotations || [];
+            state.annotations.slice().sort(function (a, b) { return b.start_offset - a.start_offset; })
+                .forEach(renderAnnotation);
+            refreshPanel();
+        }).catch(function (error) {
+            win.__yuyuLearningAnnotationsInstalled = false;
+            win.alert('注釈を読み込めませんでした。\n' + error.message);
         });
     }
 
@@ -391,7 +1023,8 @@
             var material = {
                 id: currentMaterial.id,
                 type: currentMaterial.type,
-                canTrack: currentMaterial.canTrack
+                canTrack: currentMaterial.canTrack,
+                materialFrameId: currentMaterial.materialFrameId
             };
 
             var notice = win.document.createElement('div');
@@ -489,6 +1122,8 @@
             notice.appendChild(buttons);
             win.document.body.insertBefore(notice, win.document.body.firstChild);
 
+            installAnnotationTools(win, notice, buttons, material);
+
             scheduleMaterialPositionAdjustments(win, notice);
         } catch (e) {
             // 外部サイトなど同一オリジンでない画面には案内バーを挿入しない。
@@ -518,12 +1153,14 @@
         var canTrack = link.getAttribute('data-lms-track') === '1';
         var contentId = link.getAttribute('data-lms-content-id');
         var contentType = link.getAttribute('data-lms-content-type');
+        var materialFrameId = link.getAttribute('data-lms-material-frame-id');
         var features = 'width=1200,height=850,resizable=yes,scrollbars=yes';
 
         currentMaterial = {
             id: contentId,
             type: contentType,
-            canTrack: canTrack
+            canTrack: canTrack,
+            materialFrameId: materialFrameId
         };
 
         if (canTrack) {

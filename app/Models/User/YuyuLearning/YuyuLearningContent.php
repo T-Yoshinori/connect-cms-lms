@@ -47,6 +47,11 @@ class YuyuLearningContent extends Model
         return $this->hasMany(YuyuLearningContentProgress::class, 'content_id', 'id');
     }
 
+    public function annotations()
+    {
+        return $this->hasMany(YuyuLearningAnnotation::class, 'content_id', 'id');
+    }
+
     /**
      * LMSのコース目次から教材を起動するURLを返す。
      *

@@ -2,7 +2,7 @@
 
 Connect-CMS向けの非公式LMS（学習管理）プラグイン「YuyuLearning」です。コース、章、教材、受講進捗、コース修了を管理し、Connect-CMSの既存プラグインを教材として組み合わせられます。LMS連携対応版のQuizzesプラグインを同梱しています。
 
-> バージョン: 0.9.0-beta.3
+> バージョン: 0.9.0-beta.4
 > 開発・提供: ゆうゆう企画  
 > 状態: ベータ版
 
@@ -17,6 +17,7 @@ Connect-CMS向けの非公式LMS（学習管理）プラグイン「YuyuLearning
 - Quizzesの得点・合否表示
 - Formsの回答一覧、Learningtasksの提出内容への管理者用リンク
 - 主催者名を明記した簡易修了証PDFの発行
+- 固定記事・ブログ教材への受講者本人用マーカー・メモ
 
 ## 対応確認環境
 
@@ -40,7 +41,7 @@ QuizzesはConnect-CMS標準には含まれないため、本配布ZIPへLMS連�
 
 ## ダウンロード
 
-- [connect-cms-lms-0.9.0-beta.3.zip](downloads/connect-cms-lms-0.9.0-beta.3.zip)
+- [connect-cms-lms-0.9.0-beta.4.zip](downloads/connect-cms-lms-0.9.0-beta.4.zip)
 
 ZIP内のディレクトリ構成は、Connect-CMSのルートへ重ねて配置できる形になっています。
 
@@ -68,6 +69,8 @@ ZIP内のディレクトリ構成は、Connect-CMSのルートへ重ねて配置
 8. 修了者は、主催者名が記載された修了証PDFをダウンロードできます。
 
 固定記事、ブログ、外部教材は受講者本人が完了操作を行います。小テスト、アンケート、レポート課題は、それぞれの教材プラグインに保存された結果からLMSが完了状態を判定します。
+
+YuyuLearningから固定記事・ブログ教材を開いた場合は、受講者本人だけに表示される4色のマーカーと吹き出しメモを利用できます。通常の記事閲覧やWYSIWYG編集画面には表示されません。
 
 ## 権限
 

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 
 use App\Models\User\YuyuLearning\YuyuLearningContent;
+use App\Models\User\YuyuLearning\YuyuLearningAnnotation;
 use App\Models\User\YuyuLearning\YuyuLearningContentProgress;
 use App\Models\User\YuyuLearning\YuyuLearningCourse;
 use App\Models\User\YuyuLearning\YuyuLearningEnrollment;
@@ -61,11 +62,12 @@ class YuyulearningPlugin extends UserPluginBase
         return [
             'get' => [
                 'listCourses', 'createCourse', 'editCourse', 'adminProgress', 'createSection', 'editSection',
-                'createContent', 'editContent', 'downloadCertificate',
+                'createContent', 'editContent', 'downloadCertificate', 'listAnnotations',
             ],
             'post' => [
                 'selectCourse', 'saveCourse', 'saveSection', 'moveSection', 'saveContent', 'deleteContent',
                 'markContentStarted', 'completeContent', 'syncContentProgress',
+                'saveAnnotation', 'deleteAnnotation',
             ],
         ];
     }
@@ -263,4 +265,140 @@ class YuyulearningPlugin extends UserPluginBase
     public function markContentStarted($request,$page_id,$frame_id,$content_id){if(!Auth::check())abort(403);$content=YuyuLearningContent::with('section')->findOrFail($content_id);$progressService=new YuyuLearningProgressService();$enrollment=$progressService->getEnrollmentForContent($content,(int)Auth::id());if(!$enrollment)abort(403);$progressService->markStarted($enrollment,$content);}
     public function completeContent($request,$page_id,$frame_id,$content_id){if(!Auth::check())abort(403);$content=YuyuLearningContent::with('section')->findOrFail($content_id);if(!in_array($content->content_type,['general','blog','custom'],true))abort(403);$progressService=new YuyuLearningProgressService();$enrollment=$progressService->getEnrollmentForContent($content,(int)Auth::id());if(!$enrollment)abort(403);$progressService->markCompleted($enrollment,$content,'self');$request->flash_message='教材を学習完了にしました。';if($request->filled('return_url'))$request->merge(['redirect_path'=>url($this->page->permanent_link).'#frame-'.$frame_id]);}
     public function syncContentProgress($request,$page_id,$frame_id,$content_id){if(!Auth::check())abort(403);$content=YuyuLearningContent::with('section')->findOrFail($content_id);if(!in_array($content->content_type,['quiz','questionnaire','learningtask'],true))abort(403);$progressService=new YuyuLearningProgressService();$enrollment=$progressService->getEnrollmentForContent($content,(int)Auth::id());if(!$enrollment)abort(403);$progressService->markStarted($enrollment,$content);(new YuyuLearningContentStatusService($progressService))->syncAutomaticCompletion($enrollment,$content,(int)Auth::id());}
+
+    private function getAnnotatableContent($content_id): YuyuLearningContent
+    {
+        if (!Auth::check()) {
+            abort(403);
+        }
+
+        $content = YuyuLearningContent::with('section')->findOrFail($content_id);
+        if (!in_array($content->content_type, ['general', 'blog'], true)) {
+            abort(403);
+        }
+
+        $enrollment = (new YuyuLearningProgressService())
+            ->getEnrollmentForContent($content, (int) Auth::id());
+        if (empty($enrollment)) {
+            abort(403);
+        }
+
+        return $content;
+    }
+
+    public function listAnnotations($request, $page_id, $frame_id, $content_id)
+    {
+        $content = $this->getAnnotatableContent($content_id);
+
+        $annotations = YuyuLearningAnnotation::query()
+            ->where('user_id', (int) Auth::id())
+            ->where('content_id', (int) $content_id);
+
+        if ($content->content_type === 'blog') {
+            $blog_post_ids = collect(explode(',', (string) $request->input('blog_post_ids')))
+                ->filter(function ($id) { return ctype_digit($id) && (int) $id > 0; })
+                ->map(function ($id) { return (int) $id; })
+                ->unique()
+                ->values();
+            if ($blog_post_ids->isEmpty()) {
+                return response()->json(['annotations' => []]);
+            }
+            $annotations->whereIn('blog_post_id', $blog_post_ids);
+        } else {
+            $annotations->whereNull('blog_post_id');
+        }
+
+        $annotations = $annotations
+            ->orderBy('start_offset')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json(['annotations' => $annotations]);
+    }
+
+    public function saveAnnotation($request, $page_id, $frame_id, $content_id)
+    {
+        $content = $this->getAnnotatableContent($content_id);
+
+        $validator = Validator::make($request->all(), [
+            'annotation_id' => ['nullable', 'integer'],
+            'annotation_type' => ['required', 'in:highlight,note'],
+            'blog_post_id' => ['nullable', 'integer', 'min:1'],
+            'color' => ['nullable', 'in:yellow,green,blue,pink'],
+            'selected_text' => ['required', 'string', 'max:10000'],
+            'prefix_text' => ['nullable', 'string', 'max:255'],
+            'suffix_text' => ['nullable', 'string', 'max:255'],
+            'start_offset' => ['required', 'integer', 'min:0'],
+            'end_offset' => ['required', 'integer', 'min:1'],
+            'note' => ['nullable', 'string', 'max:5000'],
+        ]);
+        $validator->after(function ($validator) use ($request, $content) {
+            if ((int) $request->input('end_offset') <= (int) $request->input('start_offset')) {
+                $validator->errors()->add('end_offset', '選択範囲を確認してください。');
+            }
+            if ($request->input('annotation_type') === 'highlight' && !$request->filled('color')) {
+                $validator->errors()->add('color', 'マーカー色を選択してください。');
+            }
+            if ($request->input('annotation_type') === 'note' && !strlen(trim((string) $request->input('note')))) {
+                $validator->errors()->add('note', 'メモを入力してください。');
+            }
+            if ($content->content_type === 'blog') {
+                if (!$request->filled('blog_post_id')) {
+                    $validator->errors()->add('blog_post_id', 'ブログ記事を特定できません。');
+                } elseif (!DB::table('blogs_posts')
+                    ->where('id', (int) $request->input('blog_post_id'))
+                    ->where('blogs_id', (int) $content->reference_id)
+                    ->whereNull('deleted_at')
+                    ->exists()) {
+                    $validator->errors()->add('blog_post_id', 'ブログ記事を確認できません。');
+                }
+            }
+        });
+        if ($validator->fails()) {
+            return response()->json(['message' => '入力内容を確認してください。', 'errors' => $validator->errors()], 422);
+        }
+
+        $annotation = null;
+        if ($request->filled('annotation_id')) {
+            $annotation = YuyuLearningAnnotation::query()
+                ->where('id', (int) $request->input('annotation_id'))
+                ->where('user_id', (int) Auth::id())
+                ->where('content_id', (int) $content_id)
+                ->firstOrFail();
+        }
+        if (empty($annotation)) {
+            $annotation = new YuyuLearningAnnotation();
+            $annotation->user_id = (int) Auth::id();
+            $annotation->content_id = (int) $content_id;
+        }
+
+        $annotation->annotation_type = $request->input('annotation_type');
+        $annotation->blog_post_id = $content->content_type === 'blog' ? (int) $request->input('blog_post_id') : null;
+        $annotation->color = $request->input('annotation_type') === 'highlight' ? $request->input('color') : null;
+        $annotation->selected_text = $request->input('selected_text');
+        $annotation->prefix_text = $request->input('prefix_text');
+        $annotation->suffix_text = $request->input('suffix_text');
+        $annotation->start_offset = (int) $request->input('start_offset');
+        $annotation->end_offset = (int) $request->input('end_offset');
+        $annotation->note = $request->input('annotation_type') === 'note' ? trim((string) $request->input('note')) : null;
+        $annotation->save();
+
+        return response()->json(['annotation' => $annotation]);
+    }
+
+    public function deleteAnnotation($request, $page_id, $frame_id, $annotation_id)
+    {
+        if (!Auth::check()) {
+            abort(403);
+        }
+
+        $annotation = YuyuLearningAnnotation::with('content.section')
+            ->where('id', (int) $annotation_id)
+            ->where('user_id', (int) Auth::id())
+            ->firstOrFail();
+        $this->getAnnotatableContent($annotation->content_id);
+        $annotation->delete();
+
+        return response()->json(['deleted' => true]);
+    }
 }
