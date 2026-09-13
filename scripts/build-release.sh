@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-version="${1:-0.9.0-beta.4}"
-project_name="connect-cms-lms"
+version="${1:-0.9.0-beta.5}"
+project_name="connect-cms-yuyulearning"
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 build_root="$(mktemp -d)"
 package_name="${project_name}-${version}"

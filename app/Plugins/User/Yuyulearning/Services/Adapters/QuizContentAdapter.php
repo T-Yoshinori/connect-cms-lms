@@ -5,16 +5,16 @@ namespace App\Plugins\User\Yuyulearning\Services\Adapters;
 use Illuminate\Support\Facades\DB;
 
 use App\Models\User\YuyuLearning\YuyuLearningContent;
-use App\Models\User\Quizzes\Quizzes;
-use App\Models\User\Quizzes\QuizzesAttempts;
+use App\Models\User\YuyuQuizzes\YuyuQuiz;
+use App\Models\User\YuyuQuizzes\YuyuQuizAttempt;
 
 class QuizContentAdapter implements ContentStatusAdapterInterface
 {
     /**
-     * Quizzes側の受験結果と再受験設定からLMS教材状態を判定する。
+     * YuyuQuiz側の受験結果と再受験設定からLMS教材状態を判定する。
      *
      * 小テスト教材は実際の起動先である frame_id を正本とし、
-     * quiz_frames に現在設定されている quiz_id を使用する。
+     * yuyu_quiz_frames に現在設定されている quiz_id を使用する。
      * 既存の yuyu_learning_contents.reference_id が不整合なら自動補正する。
      *
      * - 合格済み、または合格判定なしで採点済み => completed
@@ -30,7 +30,7 @@ class QuizContentAdapter implements ContentStatusAdapterInterface
             return null;
         }
 
-        $completed = QuizzesAttempts::query()
+        $completed = YuyuQuizAttempt::query()
             ->where('quiz_id', $quiz_id)
             ->where('user_id', $user_id)
             ->where('is_preview', false)
@@ -38,7 +38,7 @@ class QuizContentAdapter implements ContentStatusAdapterInterface
                 $query->where('pass_status', 'passed')
                     ->orWhere(function ($none_query) {
                         $none_query->where('status', 'graded')
-                            ->where('passing_type_snapshot', Quizzes::PASSING_TYPE_NONE)
+                            ->where('passing_type_snapshot', YuyuQuiz::PASSING_TYPE_NONE)
                             ->where('pass_status', 'not_applicable');
                     });
             })
@@ -48,7 +48,7 @@ class QuizContentAdapter implements ContentStatusAdapterInterface
             return 'completed';
         }
 
-        $latest_attempt = QuizzesAttempts::query()
+        $latest_attempt = YuyuQuizAttempt::query()
             ->where('quiz_id', $quiz_id)
             ->where('user_id', $user_id)
             ->where('is_preview', false)
@@ -71,28 +71,28 @@ class QuizContentAdapter implements ContentStatusAdapterInterface
             return 'in_progress';
         }
 
-        $quiz = Quizzes::find($quiz_id);
+        $quiz = YuyuQuiz::find($quiz_id);
         if (!$quiz) {
             return 'in_progress';
         }
 
-        if ($quiz->retry_type === Quizzes::RETRY_TYPE_UNLIMITED) {
+        if ($quiz->retry_type === YuyuQuiz::RETRY_TYPE_UNLIMITED) {
             return 'in_progress';
         }
 
-        $finished_attempt_count = QuizzesAttempts::query()
+        $finished_attempt_count = YuyuQuizAttempt::query()
             ->where('quiz_id', $quiz_id)
             ->where('user_id', $user_id)
             ->where('is_preview', false)
             ->whereIn('status', ['submitted', 'graded', 'expired'])
             ->count();
 
-        if ($quiz->retry_type === Quizzes::RETRY_TYPE_ONCE) {
+        if ($quiz->retry_type === YuyuQuiz::RETRY_TYPE_ONCE) {
             return 'failed';
         }
 
         if (
-            $quiz->retry_type === Quizzes::RETRY_TYPE_LIMITED
+            $quiz->retry_type === YuyuQuiz::RETRY_TYPE_LIMITED
             && $finished_attempt_count >= (int) $quiz->retry_limit
         ) {
             return 'failed';
@@ -104,7 +104,7 @@ class QuizContentAdapter implements ContentStatusAdapterInterface
     private function resolveQuizId(YuyuLearningContent $content): ?int
     {
         if (!empty($content->frame_id)) {
-            $quiz_id = DB::table('quiz_frames')
+            $quiz_id = DB::table('yuyu_quiz_frames')
                 ->where('frame_id', (int) $content->frame_id)
                 ->value('quiz_id');
 

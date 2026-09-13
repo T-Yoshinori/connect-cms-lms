@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0-beta.5 - 2026-09-13
+
+- 同梱小テストをQuizzesからYuyuQuizzesへ変更
+- YuyuLearningの教材選択・進捗判定・デモ初期化をYuyuQuizzesへ対応
+- YuyuLearning・YuyuQuizzesの新規インストール専用構成へ変更
+- Migrationは最初から`yuyu_learning_*`・`yuyu_quiz_*`テーブルを作成
+
+
 ## 0.9.0-beta.4 - 2026-09-06
 
 - 固定記事・ブログ教材へ受講者本人用のマーカー・メモを追加

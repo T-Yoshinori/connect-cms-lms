@@ -213,7 +213,7 @@ class YuyuLearningAdminProgressService
             return collect();
         }
 
-        return DB::table('quiz_attempts')
+        return DB::table('yuyu_quiz_attempts')
             ->whereIn('quiz_id', $quiz_ids)
             ->whereIn('user_id', $user_ids)
             ->where('is_preview', false)
