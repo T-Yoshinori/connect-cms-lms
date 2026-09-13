@@ -1,8 +1,8 @@
 # Connect-CMS YuyuLearning
 
-Connect-CMS向けの非公式LMS（学習管理）プラグイン「YuyuLearning」です。コース、章、教材、受講進捗、コース修了を管理し、Connect-CMSの既存プラグインを教材として組み合わせられます。LMS連携対応版のQuizzesプラグインを同梱しています。
+Connect-CMS向けの非公式LMS（学習管理）プラグイン「YuyuLearning」です。コース、章、教材、受講進捗、コース修了を管理し、Connect-CMSの既存プラグインを教材として組み合わせられます。LMS連携対応版のYuyuQuizzesプラグインを同梱しています。
 
-> バージョン: 0.9.0-beta.4
+> バージョン: 0.9.0-beta.5
 > 開発・提供: ゆうゆう企画  
 > 状態: ベータ版
 
@@ -14,7 +14,7 @@ Connect-CMS向けの非公式LMS（学習管理）プラグイン「YuyuLearning
 - 必須教材の完了によるコース修了判定
 - Connect-CMSのページ閲覧権限を利用した受講対象者の制御
 - 管理者向け受講進捗一覧
-- Quizzesの得点・合否表示
+- YuyuQuizzesの得点・合否表示
 - Formsの回答一覧、Learningtasksの提出内容への管理者用リンク
 - 主催者名を明記した簡易修了証PDFの発行
 - 固定記事・ブログ教材への受講者本人用マーカー・メモ
@@ -24,6 +24,8 @@ Connect-CMS向けの非公式LMS（学習管理）プラグイン「YuyuLearning
 - Connect-CMS 1.44.1
 - PHP 8.2
 
+本配布物はYuyuLearning・YuyuQuizzesの新規インストール用です。旧LMS・Quizzes環境の更新には使用しないでください。
+
 必ず検証環境で確認してから利用してください。本番環境へ導入する前に、ファイルとデータベースのバックアップを取得してください。
 
 ## 同梱プラグインと教材連携
@@ -32,16 +34,16 @@ LMS本体は、固定記事、ブログ、Forms、LearningtasksなどConnect-CMS
 
 - 固定記事教材: Contents
 - ブログ教材: Blogs
-- 小テスト教材: Quizzes（本配布ZIPに同梱）
+- 小テスト教材: YuyuQuizzes（本配布ZIPに同梱）
 - アンケート教材: Forms
 - レポート課題: Learningtasks
 - 外部教材: 任意の外部URL
 
-QuizzesはConnect-CMS標準には含まれないため、本配布ZIPへLMS連携対応版を同梱しています。既にQuizzesを導入している環境では、本番反映前にファイルとデータベースをバックアップし、同梱版との差分を確認してください。Quizzes単体版は[Connect-CMS Quizzes](https://github.com/T-Yoshinori/connect-cms-quizzes)でも公開しています。
+YuyuQuizzesはConnect-CMS標準には含まれないため、本配布ZIPへLMS連携対応版を同梱しています。既にYuyuQuizzesを導入している環境では、本番反映前にファイルとデータベースをバックアップし、同梱版との差分を確認してください。YuyuYuyuQuizzes単体版は[Connect-CMS YuyuQuizzes](https://github.com/T-Yoshinori/connect-cms-quizzes)でも公開しています。
 
 ## ダウンロード
 
-- [connect-cms-lms-0.9.0-beta.4.zip](downloads/connect-cms-lms-0.9.0-beta.4.zip)
+- [connect-cms-yuyulearning-0.9.0-beta.5.zip](downloads/connect-cms-yuyulearning-0.9.0-beta.5.zip)
 
 ZIP内のディレクトリ構成は、Connect-CMSのルートへ重ねて配置できる形になっています。
 
@@ -49,13 +51,12 @@ ZIP内のディレクトリ構成は、Connect-CMSのルートへ重ねて配置
 
 1. Connect-CMSのファイルとデータベースをバックアップします。
 2. 配布用ZIPを展開します。
-3. ZIP内の`app`、`database`、`resources`をConnect-CMSのルートへ重ねて配置します。LMSとQuizzesの両方が配置されます。
+3. ZIP内の`app`、`database`、`resources`をConnect-CMSのルートへ重ねて配置します。LMSとYuyuQuizzesの両方が配置されます。
 4. Connect-CMSのルートで`php artisan migrate`を実行します。
 5. `php artisan view:clear`を実行します。
 6. 管理画面のプラグイン追加から「LMS」（内部識別子：`yuyulearning`）をページへ配置します。
 7. YuyuLearningフレーム設定でコースと主催者名を設定し、章と教材を登録します。
 
-旧LMS版から更新する場合も、ファイル反映後に`php artisan migrate`を実行してください。既存の`lms_*`テーブルとプラグイン識別子は、Migrationによって`yuyu_learning_*`および`yuyulearning`へ変更されます。
 
 ## 基本的な使い方
 

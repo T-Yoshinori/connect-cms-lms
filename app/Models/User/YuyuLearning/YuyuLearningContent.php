@@ -27,7 +27,7 @@ class YuyuLearningContent extends Model
                 return;
             }
 
-            $quiz_id = DB::table('quiz_frames')
+            $quiz_id = DB::table('yuyu_quiz_frames')
                 ->where('frame_id', (int) $content->frame_id)
                 ->value('quiz_id');
 
