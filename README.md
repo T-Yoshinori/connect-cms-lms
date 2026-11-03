@@ -69,9 +69,3 @@ python3 scripts/build_package.pyでZIPを再生成できます。
 ## ライセンス
 MIT License。CMS本体と各連携先は各配布元の条件に従います。公式提供・認定・保証を受けたものではありません。
 設計・実装にはChatGPT（OpenAI）の開発支援を利用しています。
-
-## 旧LMS環境の扱い
-
-名称変更前の `lms_*` 環境は、新規導入用ZIPでの更新対象外です。
-旧改名処理は自動実行せず、[保管方針と参考ソース](archive/legacy-lms/README.md)として保存しています。
-これはCMS Ver.1→Ver.2のデータ移行ツールではありません。
